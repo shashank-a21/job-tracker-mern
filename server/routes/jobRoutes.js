@@ -13,4 +13,14 @@ router.post("/", async (req, res) => {
   }
 });
 
+// GET - Fetch all jobs
+router.get("/", async (req, res) => {
+  try {
+    const jobs = await Job.find();
+    res.status(200).json(jobs);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
