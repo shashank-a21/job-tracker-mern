@@ -1,50 +1,44 @@
 const express = require("express");
 const router = express.Router();
-const Job = require("../models/job.js");
+const Job = require("../models/Job");
+const auth = require("../middleware/auth");
 
-// POST - Add Job
-router.post("/", async (req, res) => {
-  try {
-    const newJob = new Job(req.body);
-    await newJob.save();
-    res.status(201).json(newJob);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// GET all jobs for this user
+router.get("/", auth, async (req, res) => {
+  const jobs = await Job.find({ user: req.user.id }).sort({ date: -1 });
+  res.json(jobs);
 });
 
-// DELETE job
-router.delete("/:id", async (req, res) => {
-  try {
-    await Job.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Job deleted" });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// CREATE job for this user
+router.post("/", auth, async (req, res) => {
+  const { company, role } = req.body;
+  const job = await Job.create({
+    company,
+    role,
+    user: req.user.id, // 👈 attach owner
+  });
+  res.json(job);
 });
 
-// UPDATE job status
-router.put("/:id", async (req, res) => {
-  try {
-    const updatedJob = await Job.findByIdAndUpdate(
-      req.params.id,
-      { status: req.body.status },
-      { new: true }
-    );
-    res.status(200).json(updatedJob);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// UPDATE job (only if it belongs to this user)
+router.put("/:id", auth, async (req, res) => {
+  const job = await Job.findOneAndUpdate(
+    { _id: req.params.id, user: req.user.id }, // 👈 ownership check
+    req.body,
+    { new: true }
+  );
+  if (!job) return res.status(404).json({ msg: "Not found" });
+  res.json(job);
 });
 
-// GET - Fetch all jobs
-router.get("/", async (req, res) => {
-  try {
-    const jobs = await Job.find();
-    res.status(200).json(jobs);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// DELETE job (only if it belongs to this user)
+router.delete("/:id", auth, async (req, res) => {
+  const job = await Job.findOneAndDelete({
+    _id: req.params.id,
+    user: req.user.id, // 👈 ownership check
+  });
+  if (!job) return res.status(404).json({ msg: "Not found" });
+  res.json({ msg: "Deleted" });
 });
 
 module.exports = router;

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-
-const API_URL = "http://localhost:8080/api/jobs"; // 🔁 change this after deployment
+import Auth from "./Auth";
+const API_URL = "https://job-tracker-mern-e5tj.onrender.com/api/jobs";
 
 function App() {
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [jobs, setJobs] = useState([]);
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
@@ -10,11 +11,15 @@ function App() {
   const [filter, setFilter] = useState("All");
 
   useEffect(() => {
-    fetchJobs();
+    if (token) fetchJobs();
   }, []);
 
   const fetchJobs = () => {
-    fetch(API_URL)
+    fetch(API_URL, {
+      headers: {
+        Authorization: token,
+      },
+    })
       .then((res) => res.json())
       .then((data) => setJobs(data))
       .catch((err) => console.log(err));
@@ -22,13 +27,13 @@ function App() {
 
   const addJob = (e) => {
     e.preventDefault();
-
-    if (!company || !role) return; // 🚫 prevent empty
+    if (!company || !role) return;
 
     fetch(API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: token,
       },
       body: JSON.stringify({ company, role }),
     }).then(() => {
@@ -41,6 +46,9 @@ function App() {
   const deleteJob = (id) => {
     fetch(`${API_URL}/${id}`, {
       method: "DELETE",
+      headers: {
+        Authorization: token,
+      },
     }).then(() => fetchJobs());
   };
 
@@ -49,6 +57,7 @@ function App() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        Authorization: token,
       },
       body: JSON.stringify({ status: newStatus }),
     }).then(() => fetchJobs());
@@ -74,13 +83,18 @@ function App() {
     rejected: jobs.filter((j) => j.status === "Rejected").length,
   };
 
-  // 🧱 Kanban grouping (IMPORTANT: use filteredJobs)
+  // 🧱 Kanban grouping
   const groupedJobs = {
     Applied: filteredJobs.filter((j) => j.status === "Applied"),
     Interview: filteredJobs.filter((j) => j.status === "Interview"),
     Offer: filteredJobs.filter((j) => j.status === "Offer"),
     Rejected: filteredJobs.filter((j) => j.status === "Rejected"),
   };
+
+  // 🚫 If not logged in
+  if (!token) {
+  return <Auth setToken={setToken} />;
+}
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
