@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 
+
+
 function App() {
   const [jobs, setJobs] = useState([]);
   const [company, setCompany] = useState("");
@@ -9,10 +11,14 @@ function App() {
     fetchJobs();
   }, []);
 
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("All");
+
   const fetchJobs = () => {
     fetch("http://localhost:8080/api/jobs")
       .then((res) => res.json())
-      .then((data) => setJobs(data));
+      .then((data) => setJobs(data))
+      .catch((err) => console.log(err));
   };
 
   const addJob = (e) => {
@@ -27,72 +33,113 @@ function App() {
     }).then(() => {
       setCompany("");
       setRole("");
-      fetchJobs(); // refresh list
+      fetchJobs();
     });
   };
 
   const deleteJob = (id) => {
-  fetch(`http://localhost:8080/api/jobs/${id}`, {
-    method: "DELETE",
-  }).then(() => fetchJobs());
-};
+    fetch(`http://localhost:8080/api/jobs/${id}`, {
+      method: "DELETE",
+    }).then(() => fetchJobs());
+  };
 
-const updateStatus = (id, newStatus) => {
-  fetch(`http://localhost:8080/api/jobs/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ status: newStatus }),
-  }).then(() => fetchJobs());
-};
+  const updateStatus = (id, newStatus) => {
+    fetch(`http://localhost:8080/api/jobs/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: newStatus }),
+    }).then(() => fetchJobs());
+  };
+
+  const filteredJobs = jobs.filter((job) => {
+  const matchesSearch =
+    job.company?.toLowerCase().includes(search.toLowerCase()) ||
+    job.role?.toLowerCase().includes(search.toLowerCase());
+
+  const matchesFilter =
+    filter === "All" || job.status === filter;
+
+  return matchesSearch && matchesFilter;
+  });
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h1>Job Tracker</h1>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-6 text-center">Job Tracker</h1>
 
       {/* FORM */}
-      <form onSubmit={addJob}>
+      <form onSubmit={addJob} className="flex gap-3 justify-center mb-6">
         <input
-          type="text"
+          className="border p-2 rounded w-1/4"
           placeholder="Company"
           value={company}
           onChange={(e) => setCompany(e.target.value)}
         />
         <input
-          type="text"
+          className="border p-2 rounded w-1/4"
           placeholder="Role"
           value={role}
           onChange={(e) => setRole(e.target.value)}
         />
-        <button type="submit">Add Job</button>
+        <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          Add
+        </button>
       </form>
 
-      <hr />
+      <div className="flex gap-3 justify-center mb-6">
+        <input
+          className="border p-2 rounded w-1/3"
+          placeholder="Search by company or role..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        <select
+          className="border p-2 rounded"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <option>All</option>
+          <option>Applied</option>
+          <option>Interview</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+        </select>
+      </div>
 
       {/* JOB LIST */}
-        {jobs.map((job) => (
-        <div key={job._id}>
-          <h3>{job.company || "No Company"}</h3>
-          <p>{job.role || "No Role"}</p>
-
-          <select
-            value={job.status}
-            onChange={(e) => updateStatus(job._id, e.target.value)}
+      <div className="max-w-2xl mx-auto">
+        {filteredJobs.map((job) => (
+          <div
+            key={job._id}
+            className="bg-white p-4 rounded shadow mb-3 flex justify-between items-center"
           >
-            <option>Applied</option>
-            <option>Interview</option>
-            <option>Offer</option>
-            <option>Rejected</option>
-          </select>
+            <div>
+              <h3 className="font-semibold">{job.company || "No Company"}</h3>
+              <p className="text-gray-600">{job.role || "No Role"}</p>
 
-          <button onClick={() => deleteJob(job._id)}>
-            Delete
-          </button>
+              <select
+                className="border mt-2 p-1 rounded"
+                value={job.status}
+                onChange={(e) => updateStatus(job._id, e.target.value)}
+              >
+                <option>Applied</option>
+                <option>Interview</option>
+                <option>Offer</option>
+                <option>Rejected</option>
+              </select>
+            </div>
 
-          <hr />
-        </div>
-))}
+            <button
+              onClick={() => deleteJob(job._id)}
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
