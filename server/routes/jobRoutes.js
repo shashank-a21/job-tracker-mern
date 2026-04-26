@@ -13,6 +13,16 @@ router.post("/", async (req, res) => {
   }
 });
 
+// DELETE job
+router.delete("/:id", async (req, res) => {
+  try {
+    await Job.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Job deleted" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET - Fetch all jobs
 router.get("/", async (req, res) => {
   try {

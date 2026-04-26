@@ -31,6 +31,12 @@ function App() {
     });
   };
 
+  const deleteJob = (id) => {
+  fetch(`http://localhost:8080/api/jobs/${id}`, {
+    method: "DELETE",
+  }).then(() => fetchJobs());
+};
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Job Tracker</h1>
@@ -55,13 +61,19 @@ function App() {
       <hr />
 
       {/* JOB LIST */}
-      {jobs.map((job) => (
+        {jobs.map((job) => (
         <div key={job._id}>
           <h3>{job.company || "No Company"}</h3>
           <p>{job.role || "No Role"}</p>
           <p>Status: {job.status}</p>
+
+          <button onClick={() => deleteJob(job._id)}>
+            Delete
+          </button>
+
+          <hr />
         </div>
-      ))}
+  ))}
     </div>
   );
 }
