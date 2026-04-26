@@ -37,6 +37,16 @@ function App() {
   }).then(() => fetchJobs());
 };
 
+const updateStatus = (id, newStatus) => {
+  fetch(`http://localhost:8080/api/jobs/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status: newStatus }),
+  }).then(() => fetchJobs());
+};
+
   return (
     <div style={{ padding: "20px" }}>
       <h1>Job Tracker</h1>
@@ -65,7 +75,16 @@ function App() {
         <div key={job._id}>
           <h3>{job.company || "No Company"}</h3>
           <p>{job.role || "No Role"}</p>
-          <p>Status: {job.status}</p>
+
+          <select
+            value={job.status}
+            onChange={(e) => updateStatus(job._id, e.target.value)}
+          >
+            <option>Applied</option>
+            <option>Interview</option>
+            <option>Offer</option>
+            <option>Rejected</option>
+          </select>
 
           <button onClick={() => deleteJob(job._id)}>
             Delete
@@ -73,7 +92,7 @@ function App() {
 
           <hr />
         </div>
-  ))}
+))}
     </div>
   );
 }

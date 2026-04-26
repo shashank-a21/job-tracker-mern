@@ -23,6 +23,20 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// UPDATE job status
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedJob = await Job.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status },
+      { new: true }
+    );
+    res.status(200).json(updatedJob);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // GET - Fetch all jobs
 router.get("/", async (req, res) => {
   try {
