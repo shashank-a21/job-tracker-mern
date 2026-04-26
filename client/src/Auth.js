@@ -8,40 +8,35 @@ function Auth({ setToken }) {
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const url = isLogin ? "/login" : "/register";
+  const url = isLogin ? "/login" : "/register";
 
-    try {
-      const res = await fetch(`${BASE_URL}${url}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+  try {
+    const res = await fetch(`${BASE_URL}${url}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
 
-      // 👇 IMPORTANT CHECK
-        if (!res.ok) {
-            const text = await res.text();
-            console.log("Server error:", text);
-            alert("Server error. Check backend.");
-            return;
-        }
+    const text = await res.text(); // 👈 IMPORTANT
+    console.log("RAW RESPONSE:", text);
 
-      const data = await res.json();
+    const data = JSON.parse(text); // try parsing
 
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
-      } else {
-        alert(data.msg || "Check credentials");
-      }
-    } catch (err) {
-        console.log("ERROR:", err);
-        alert("Error: " + err.message);
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+    } else {
+      alert(data.msg || "Error");
     }
-  };
+  } catch (err) {
+    console.log("ERROR:", err);
+    alert("Server error: " + err.message);
+  }
+};
 
   return (
     <div className="flex justify-center items-center h-screen bg-gray-100">
